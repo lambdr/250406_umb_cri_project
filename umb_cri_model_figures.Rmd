@@ -10,6 +10,8 @@ This code chunk loads the relevant packages for creating figures
 ```{r, include=FALSE}
 library(tidyverse)
 library(readxl)
+library(survival)
+library(ggsurvfit)
 ```
 
 ### Load Data
@@ -30,9 +32,11 @@ df_injury <- read_xlsx("data/Control Group Data_Model Ver.xlsx",
                names_to = "wound_type2", names_pattern = "(.*)_end", values_to = "wound_end") |> 
   filter(wound_type == wound_type2) |> 
   select(-wound_type2) |> 
-  mutate(wound_type = str_to_sentence(wound_type),
-         wound_type = fct(wound_type, levels = c("Necrosis", "Ulceration", 
-                                                 "Desquamation", "Erythema")))
+  mutate(
+    wound_resolved = ifelse(wound_end == 120, 0, 1),
+    wound_type = str_to_sentence(wound_type),
+    wound_type = fct(wound_type, levels = c("Necrosis", "Ulceration", 
+                                            "Desquamation", "Erythema")))
 ```
 
 
@@ -85,7 +89,44 @@ boxplot_wound_type <- df_injury |>
     x = "Days after radiation",
     y = "Injury Phenotype"
   ) +
-  theme(legend.position = "none")
+  theme(legend.position = "none") 
 
 ggsave(plot = boxplot_wound_type, filename = "images/injury_pheno_boxplot_start_and_end.png")
 ```
+
+
+### Survival Analysis 
+Additionally, I will look at the time to wound healing. Animals were right-censored at 120 days. The code chunk below creates a Kaplan-Meier curve for the cumulative incidence of wound healing with a complementary log-log confidence interval
+```{r km curve for ulceration}
+#ulceration_km <- 
+df_injury |> 
+  filter(wound_type == "Ulceration") |> 
+  mutate(days_to_closure = wound_end - wound_start) |> 
+  survfit(Surv(days_to_closure, wound_resolved) ~ 1, data = _, conf.type = "log-log") |> 
+  ggsurvfit(type = "risk") +
+  add_confidence_interval(type = "lines", alpha = 0.6, size = 0.4, linetype = "dashed") +
+  add_confidence_interval(alpha = 0.1) + 
+  labs(
+    x = "Days from first ulceration",
+    y = "Cumulative incidence of wound closure"
+  ) +
+  ylim(0,1)
+
+#ggsave(plot = ulceration_km, filename = "images/ulceration_kaplan_meier.png")
+```
+
+
+Oops. Doesn't look like you can actually consider all wound sites independently.
+```{r}
+df_injury |> 
+  filter(wound_type == "Ulceration") |> 
+  mutate(days_to_closure = wound_end - wound_start) |> 
+  kruskal.test(days_to_closure ~ as.character(animal_id), data = _) 
+
+df_injury |> 
+  filter(wound_type == "Ulceration") |> 
+  mutate(days_to_closure = wound_end - wound_start) |> 
+  ggplot(aes(x = as.character(animal_id), y = days_to_closure)) +
+  geom_boxplot()
+```
+
