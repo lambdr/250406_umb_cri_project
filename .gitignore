@@ -4,5 +4,6 @@
 .Ruserdata
 
 data/
+presentation/
 time_tracking.xlsx
 .DS_Store
