@@ -98,8 +98,7 @@ ggsave(plot = boxplot_wound_type, filename = "images/injury_pheno_boxplot_start_
 ### Survival Analysis 
 Additionally, I will look at the time to wound healing. Animals were right-censored at 120 days. The code chunk below creates a Kaplan-Meier curve for the cumulative incidence of wound healing with a complementary log-log confidence interval
 ```{r km curve for ulceration}
-#ulceration_km <- 
-df_injury |> 
+ulceration_km <- df_injury |> 
   filter(wound_type == "Ulceration") |> 
   mutate(days_to_closure = wound_end - wound_start) |> 
   survfit(Surv(days_to_closure, wound_resolved) ~ 1, data = _, conf.type = "log-log") |> 
@@ -110,14 +109,14 @@ df_injury |>
     x = "Days from first ulceration",
     y = "Cumulative incidence of wound closure"
   ) +
-  ylim(0,1)
+  ylim(0, 1)
 
-#ggsave(plot = ulceration_km, filename = "images/ulceration_kaplan_meier.png")
+ggsave(plot = ulceration_km, filename = "images/ulceration_kaplan_meier.png")
 ```
 
 
 Oops. Doesn't look like you can actually consider all wound sites independently.
-```{r}
+```{r, include=FALSE}
 df_injury |> 
   filter(wound_type == "Ulceration") |> 
   mutate(days_to_closure = wound_end - wound_start) |> 
