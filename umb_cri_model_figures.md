@@ -1,20 +1,18 @@
----
-title: "Necrosis Project Figures"
-author: "Derek Lamb"
-date: "`r Sys.Date()`"
-output: github_document
----
+Necrosis Project Figures
+================
+Derek Lamb
+2025-04-06
 
 ### Load Packages
-This code chunk loads the relevant packages for creating figures 
-```{r, include=FALSE}
-library(tidyverse)
-library(readxl)
-```
+
+This code chunk loads the relevant packages for creating figures
 
 ### Load Data
-In this code chunk, I read in the data, convert it to long format, and standardize the nomenclature.
-```{r load data}
+
+In this code chunk, I read in the data, convert it to long format, and
+standardize the nomenclature.
+
+``` r
 df_injury <- read_xlsx("data/Control Group Data_Model Ver.xlsx",
                     sheet="Clinical Onset of Injury Pheno", range="A1:K36") |> 
   janitor::clean_names() |> 
@@ -33,16 +31,20 @@ df_injury <- read_xlsx("data/Control Group Data_Model Ver.xlsx",
   mutate(wound_type = str_to_sentence(wound_type))
 ```
 
-
 ## Making figures
+
 The code below creates potential figures.
 
 ### Injury Duration
 
 #### Floating Bar Chart
-First, we look at a floating bar chart where the start and end of each bar are the mean time, with error bars denoting standard deviation (**Note:** Previous versions of this plot showed SEM rather thand standard deviation).
 
-```{r, wound type floating bar}
+First, we look at a floating bar chart where the start and end of each
+bar are the mean time, with error bars denoting standard deviation
+(**Note:** Previous versions of this plot showed SEM rather thand
+standard deviation).
+
+``` r
 floating_bar_wound_type <- df_injury |> 
   group_by(wound_type) |> 
   summarize(avg_start = mean(wound_start, na.rm=T), 
@@ -68,11 +70,14 @@ floating_bar_wound_type <- df_injury |>
 ggsave(plot = floating_bar_wound_type, filename = "images/injury_pheno_floating_bar_start_and_end.png")
 ```
 
+    ## Saving 7 x 5 in image
 
 #### Multi boxplot
-Alternatively, we can represent the wound start and end time as separate boxplots, organized by phenotype.
 
-```{r wound type boxplot}
+Alternatively, we can represent the wound start and end time as separate
+boxplots, organized by phenotype.
+
+``` r
 boxplot_wound_type <- df_injury |> 
   group_by(wound_type) |> 
   ggplot() +
@@ -87,3 +92,8 @@ boxplot_wound_type <- df_injury |>
 
 ggsave(plot = boxplot_wound_type, filename = "images/injury_pheno_boxplot_start_and_end.png")
 ```
+
+    ## Saving 7 x 5 in image
+
+    ## Warning: Removed 1 row containing non-finite outside the scale range
+    ## (`stat_boxplot()`).
