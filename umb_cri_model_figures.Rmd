@@ -30,7 +30,9 @@ df_injury <- read_xlsx("data/Control Group Data_Model Ver.xlsx",
                names_to = "wound_type2", names_pattern = "(.*)_end", values_to = "wound_end") |> 
   filter(wound_type == wound_type2) |> 
   select(-wound_type2) |> 
-  mutate(wound_type = str_to_sentence(wound_type))
+  mutate(wound_type = str_to_sentence(wound_type),
+         wound_type = fct(wound_type, levels = c("Necrosis", "Ulceration", 
+                                                 "Desquamation", "Erythema")))
 ```
 
 
@@ -52,8 +54,8 @@ floating_bar_wound_type <- df_injury |>
             ) |> 
   ggplot() +
   geom_rect(aes(xmin = avg_start, xmax = avg_end, 
-                ymin = as.numeric(factor(wound_type)) - 0.2, 
-                ymax = as.numeric(factor(wound_type)) + 0.2),
+                ymin = as.numeric(wound_type) - 0.2, 
+                ymax = as.numeric(wound_type) + 0.2),
                 fill = "#2A45FF", 
             color = "black", alpha=0.8) +
   geom_errorbar(aes(xmin = avg_start - sem_start, xmax = avg_start, y = wound_type), width = 0.2)+
