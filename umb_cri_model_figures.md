@@ -99,9 +99,6 @@ ggsave(plot = boxplot_wound_type, filename = "images/injury_pheno_boxplot_start_
 
     ## Saving 7 x 5 in image
 
-    ## Warning: Removed 1 row containing non-finite outside the scale range
-    ## (`stat_boxplot()`).
-
 ### Survival Analysis
 
 Additionally, I will look at the time to wound healing. Animals were
