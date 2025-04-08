@@ -1,11 +1,18 @@
 Necrosis Project Figures
 ================
 Derek Lamb
-2025-04-07
+2025-04-08
 
 ### Load Packages
 
 This code chunk loads the relevant packages for creating figures
+
+Eventually, I will have my colorblind palette as a package, but for now,
+here it is manually:
+
+``` r
+manual_cb <- c("#000000", "#4E3F92", "#D5005E", "#28A2D2", "#999999", "#009B77", "#CC49A7",   "#00739E", "#862AAF", "#666666")
+```
 
 ### Load Data
 
@@ -102,12 +109,16 @@ ggsave(plot = boxplot_wound_type, filename = "images/injury_pheno_boxplot_start_
 ### Survival Analysis
 
 Additionally, I will look at the time to wound healing. Animals were
-right-censored at 120 days. The code chunk below creates a Kaplan-Meier
-curve for the cumulative incidence of wound healing with a complementary
-log-log confidence interval
+right-censored at 120 days.
+
+#### KM Curve for Ulceration
+
+Below I will generate the KM curve for ulceration with a confidence
+interval and without (complementary log-log).
 
 ``` r
-ulceration_km <- df_injury |> 
+# With CI
+ulceration_km_with_ci <- df_injury |> 
   filter(wound_type == "Ulceration") |> 
   mutate(days_to_closure = wound_end - wound_start) |> 
   survfit(Surv(days_to_closure, wound_resolved) ~ 1, data = _, conf.type = "log-log") |> 
@@ -120,7 +131,70 @@ ulceration_km <- df_injury |>
   ) +
   ylim(0, 1)
 
-ggsave(plot = ulceration_km, filename = "images/ulceration_kaplan_meier.png")
+ggsave(plot = ulceration_km_with_ci, filename = "images/ulceration_kaplan_meier_with_ci.png")
+```
+
+    ## Saving 7 x 5 in image
+
+``` r
+# No CI
+ulceration_km_no_ci <- df_injury |> 
+  filter(wound_type == "Ulceration") |> 
+  mutate(days_to_closure = wound_end - wound_start) |> 
+  survfit(Surv(days_to_closure, wound_resolved) ~ 1, data = _, conf.type = "log-log") |> 
+  ggsurvfit(type = "risk") +
+  labs(
+    x = "Days from first ulceration",
+    y = "Cumulative incidence of wound closure"
+  ) +
+  ylim(0, 1)
+
+ggsave(plot = ulceration_km_no_ci, filename = "images/ulceration_kaplan_meier_no_ci.png")
+```
+
+    ## Saving 7 x 5 in image
+
+This plot shows the overlayed KM curves for all phenotypes
+
+``` r
+four_pheno_km <- df_injury |> 
+  mutate(days_to_closure = wound_end - wound_start) |> 
+  survfit(Surv(days_to_closure, wound_resolved) ~ wound_type, data = _, conf.type = "log-log") |> 
+  ggsurvfit(type = "risk") +
+  scale_color_manual(values = manual_cb, labels = c("Necrosis", "Ulceration", 
+                                                    "Desquamation", "Erythema")) +
+  labs(
+    x = "Time from first occurence (days)",
+    y = "Cumulative incidence of resolution",
+    color = "Injury Phenotype"
+  ) +
+  ylim(0, 1) +
+  theme(legend.position = "right")
+
+ggsave(plot = four_pheno_km, filename = "images/combined_kaplan_meier_four_phenos.png")
+```
+
+    ## Saving 7 x 5 in image
+
+Additionally, the following plot is the same, but without the erythema
+phenotype.
+
+``` r
+three_pheno_km <- df_injury |> 
+  mutate(days_to_closure = wound_end - wound_start) |> 
+  survfit(Surv(days_to_closure, wound_resolved) ~ wound_type, data = _, conf.type = "log-log") |> 
+  ggsurvfit(type = "risk") +
+  scale_color_manual(values = manual_cb, labels = c("Necrosis", "Ulceration", 
+                                                    "Desquamation", "Erythema")) +
+  labs(
+    x = "Time from first occurence (days)",
+    y = "Cumulative incidence of resolution",
+    color = "Injury Phenotype"
+  ) +
+  ylim(0, 1) +
+  theme(legend.position = "right")
+
+ggsave(plot = three_pheno_km, filename = "images/combined_kaplan_meier_three_phenos.png")
 ```
 
     ## Saving 7 x 5 in image
