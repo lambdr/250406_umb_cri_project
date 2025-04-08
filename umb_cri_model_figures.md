@@ -181,11 +181,12 @@ phenotype.
 
 ``` r
 three_pheno_km <- df_injury |> 
+  filter(wound_type != "Erythema") |> 
   mutate(days_to_closure = wound_end - wound_start) |> 
   survfit(Surv(days_to_closure, wound_resolved) ~ wound_type, data = _, conf.type = "log-log") |> 
   ggsurvfit(type = "risk") +
   scale_color_manual(values = manual_cb, labels = c("Necrosis", "Ulceration", 
-                                                    "Desquamation", "Erythema")) +
+                                                    "Desquamation")) +
   labs(
     x = "Time from first occurence (days)",
     y = "Cumulative incidence of resolution",
