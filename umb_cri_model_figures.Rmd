@@ -43,7 +43,8 @@ df_injury <- read_xlsx("data/Control Group Data_Model Ver.xlsx",
     wound_resolved = ifelse(wound_end == 120, 0, 1),
     wound_type = str_to_sentence(wound_type),
     wound_type = fct(wound_type, levels = c("Necrosis", "Ulceration", 
-                                            "Desquamation", "Erythema")))
+                                            "Desquamation", "Erythema")),
+    days_to_closure = wound_end - wound_start)
 ```
 
 
@@ -73,7 +74,7 @@ floating_bar_wound_type <- df_injury |>
   geom_errorbar(aes(xmin = avg_end, xmax = avg_end + sem_end, y = wound_type), width = 0.2) +
   theme_bw() +
   labs(
-    x = "Days after radiation",
+    x = "Days after irradiation",
     y = "Injury Phenotype"
   ) +
   theme(legend.position = "none")
@@ -93,7 +94,7 @@ boxplot_wound_type <- df_injury |>
   geom_boxplot(aes(x = wound_end, y = wound_type), fill = "#FF2A45", alpha = 0.8) +
   theme_bw() +
   labs(
-    x = "Days after radiation",
+    x = "Days after irradiation",
     y = "Injury Phenotype"
   ) +
   theme(legend.position = "none") 
@@ -144,12 +145,21 @@ ggsave(plot = ulceration_km_no_ci, filename = "images/ulceration_kaplan_meier_no
 This plot shows the overlayed KM curves for all phenotypes
 
 ```{r all four phenotypes}
-four_pheno_km <- df_injury |> 
-  mutate(days_to_closure = wound_end - wound_start) |> 
-  survfit(Surv(days_to_closure, wound_resolved) ~ wound_type, data = _, conf.type = "log-log") |> 
+# Fit and add custom names
+four_pheno_km_fit <- df_injury |> 
+  survfit(Surv(days_to_closure, wound_resolved) ~ wound_type, data = _, conf.type = "log-log") 
+
+names(four_pheno_km_fit$strata) <- c("Necrosis", "Ulceration", "Desquamation", "Erythema")
+
+# Create figure
+four_pheno_km <- four_pheno_km_fit |> 
   ggsurvfit(type = "risk") +
-  scale_color_manual(values = manual_cb, labels = c("Necrosis", "Ulceration", 
-                                                    "Desquamation", "Erythema")) +
+  scale_color_manual(values = manual_cb) +
+  scale_x_continuous(breaks = c(0, 20, 40, 60, 80, 100)) +
+  add_risktable(
+    times = c(0, 20, 40, 60, 80, 100),
+    risktable_stats = "n.risk", 
+    stats_label = "Number of irradiation sites at risk of event") +
   labs(
     x = "Time from first occurence (days)",
     y = "Cumulative incidence of resolution",
@@ -163,13 +173,22 @@ ggsave(plot = four_pheno_km, filename = "images/combined_kaplan_meier_four_pheno
 
 Additionally, the following plot is the same, but without the erythema phenotype.
 ```{r three phenotypes}
-three_pheno_km <- df_injury |> 
+# Fit and add custom names
+three_pheno_km_fit <- df_injury |> 
   filter(wound_type != "Erythema") |> 
-  mutate(days_to_closure = wound_end - wound_start) |> 
-  survfit(Surv(days_to_closure, wound_resolved) ~ wound_type, data = _, conf.type = "log-log") |> 
+  survfit(Surv(days_to_closure, wound_resolved) ~ wound_type, data = _, conf.type = "log-log") 
+
+names(three_pheno_km_fit$strata) <- c("Necrosis", "Ulceration", "Desquamation")
+
+# Create image
+three_pheno_km <- three_pheno_km_fit |> 
   ggsurvfit(type = "risk") +
-  scale_color_manual(values = manual_cb, labels = c("Necrosis", "Ulceration", 
-                                                    "Desquamation")) +
+  scale_x_continuous(breaks = c(0, 20, 40, 60, 80, 100)) +
+  add_risktable(
+    times = c(0, 20, 40, 60, 80, 100),
+    risktable_stats = "n.risk", 
+    stats_label = "Number of irradiation sites at risk of event") +
+  scale_color_manual(values = manual_cb) +
   labs(
     x = "Time from first occurence (days)",
     y = "Cumulative incidence of resolution",
@@ -181,7 +200,9 @@ three_pheno_km <- df_injury |>
 ggsave(plot = three_pheno_km, filename = "images/combined_kaplan_meier_three_phenos.png")
 ```
 
-Oops. Doesn't look like you can actually consider all wound sites independently.
+
+
+<!-- Oops. Doesn't look like you can actually consider all wound sites independently. -->
 ```{r, include=FALSE}
 df_injury |> 
   filter(wound_type == "Ulceration") |> 
