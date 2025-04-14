@@ -1,30 +1,25 @@
----
-title: "Necrosis Project Figures - Survival Analysis"
-author: "Derek Lamb"
-date: "`r Sys.Date()`"
-output: github_document
----
+Necrosis Project Figures - Survival Analysis
+================
+Derek Lamb
+2025-04-14
 
 ### Load Packages
-This code chunk loads the relevant packages for creating figures 
-```{r load packages, include=FALSE}
-library(tidyverse)
-library(readxl)
-library(survival)
-library(ggsurvfit)
-library(survminer)
-```
 
-Eventually, I will have my colorblind palette as a package, but for now, here it is manually:
+This code chunk loads the relevant packages for creating figures
 
-```{r colorblind}
+Eventually, I will have my colorblind palette as a package, but for now,
+here it is manually:
+
+``` r
 manual_cb <- c("#000000", "#4E3F92", "#D5005E", "#28A2D2", "#999999", "#009B77", "#CC49A7",   "#00739E", "#862AAF", "#666666")
 ```
 
-
 ### Load Data
-In this code chunk, I read in the data, convert it to long format, and standardize the nomenclature.
-```{r load data}
+
+In this code chunk, I read in the data, convert it to long format, and
+standardize the nomenclature.
+
+``` r
 df_injury <- read_xlsx("data/Control Group Data_Model Ver.xlsx",
                     sheet="Clinical Onset of Injury Pheno", range="A1:K36") |> 
   janitor::clean_names() |> 
@@ -48,16 +43,20 @@ df_injury <- read_xlsx("data/Control Group Data_Model Ver.xlsx",
     days_to_closure = wound_end - wound_start)
 ```
 
-
 ## Making figures
+
 The code below creates potential figures.
 
 ### Injury Duration
 
 #### Floating Bar Chart
-First, we look at a floating bar chart where the start and end of each bar are the mean time, with error bars denoting standard deviation (**Note:** Previous versions of this plot showed SEM rather thand standard deviation).
 
-```{r wound type floating bar}
+First, we look at a floating bar chart where the start and end of each
+bar are the mean time, with error bars denoting standard deviation
+(**Note:** Previous versions of this plot showed SEM rather thand
+standard deviation).
+
+``` r
 floating_bar_wound_type <- df_injury |> 
   group_by(wound_type) |> 
   summarize(avg_start = mean(wound_start, na.rm=T), 
@@ -83,11 +82,14 @@ floating_bar_wound_type <- df_injury |>
 ggsave(plot = floating_bar_wound_type, filename = "images/injury_pheno_floating_bar_start_and_end.png")
 ```
 
+    ## Saving 7 x 5 in image
 
 #### Multi boxplot
-Alternatively, we can represent the wound start and end time as separate boxplots, organized by phenotype.
 
-```{r wound type boxplot}
+Alternatively, we can represent the wound start and end time as separate
+boxplots, organized by phenotype.
+
+``` r
 boxplot_wound_type <- df_injury |> 
   group_by(wound_type) |> 
   ggplot() +
@@ -103,15 +105,19 @@ boxplot_wound_type <- df_injury |>
 ggsave(plot = boxplot_wound_type, filename = "images/injury_pheno_boxplot_start_and_end.png")
 ```
 
+    ## Saving 7 x 5 in image
 
-### Survival Analysis 
-Additionally, I will look at the time to wound healing. Animals were right-censored at 120 days.
+### Survival Analysis
+
+Additionally, I will look at the time to wound healing. Animals were
+right-censored at 120 days.
 
 #### KM Curve for Ulceration
 
-Below I will generate the KM curve for ulceration with a confidence interval and without (complementary log-log).
+Below I will generate the KM curve for ulceration with a confidence
+interval and without (complementary log-log).
 
-```{r km curves for ulceration}
+``` r
 # With CI
 ulceration_km_with_ci <- df_injury |> 
   filter(wound_type == "Ulceration") |> 
@@ -128,7 +134,11 @@ ulceration_km_with_ci <- df_injury |>
   ylim(0, 1)
 
 ggsave(plot = ulceration_km_with_ci, filename = "images/ulceration_kaplan_meier_with_ci.png")
+```
 
+    ## Saving 7 x 5 in image
+
+``` r
 # No CI
 ulceration_km_no_ci <- df_injury |> 
   filter(wound_type == "Ulceration") |> 
@@ -145,9 +155,11 @@ ulceration_km_no_ci <- df_injury |>
 ggsave(plot = ulceration_km_no_ci, filename = "images/ulceration_kaplan_meier_no_ci.png")
 ```
 
+    ## Saving 7 x 5 in image
+
 This plot shows the overlayed KM curves for all phenotypes
 
-```{r all four phenotypes}
+``` r
 # Fit and add custom names
 four_pheno_km_fit <- df_injury |> 
   survfit(Surv(days_to_closure, wound_resolved) ~ wound_type, data = _, conf.type = "log-log") 
@@ -168,12 +180,18 @@ four_pheno_km <- four_pheno_km_fit |>
              legend = "right") 
 
 print(four_pheno_km) # save as 601x1000px png 
+```
 
+![](umb_cri_model_survival_analysis_figures_files/figure-gfm/all%20four%20phenotypes-1.png)<!-- -->
+
+``` r
 #ggsave(plot = print(four_pheno_km), filename = "images/combined_kaplan_meier_four_phenos.pdf")
 ```
 
-Additionally, the following plot is the same, but without the erythema phenotype.
-```{r three phenotypes}
+Additionally, the following plot is the same, but without the erythema
+phenotype.
+
+``` r
 # Fit and add custom names
 three_pheno_km <- df_injury |> 
   filter(wound_type != "Erythema") |> 
@@ -193,18 +211,6 @@ three_pheno_km <- df_injury |>
 ggsave(plot = three_pheno_km, filename = "images/combined_kaplan_meier_three_phenos.png")
 ```
 
+    ## Saving 7 x 5 in image
 
 <!-- Oops. Doesn't look like you can actually consider all wound sites independently. -->
-```{r, include=FALSE}
-df_injury |> 
-  filter(wound_type == "Ulceration") |> 
-  mutate(days_to_closure = wound_end - wound_start) |> 
-  kruskal.test(days_to_closure ~ as.character(animal_id), data = _) 
-
-df_injury |> 
-  filter(wound_type == "Ulceration") |> 
-  mutate(days_to_closure = wound_end - wound_start) |> 
-  ggplot(aes(x = as.character(animal_id), y = days_to_closure)) +
-  geom_boxplot()
-```
-
