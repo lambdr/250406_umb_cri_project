@@ -28,7 +28,8 @@ load_ulcer_data <- function(path, sheet, range){
            localization_code = ifelse(is.na(localization_code),
                                       str_extract(comments, "(?<=Back-up site )\\w{1}(?= used)"),
                                       localization_code),
-           wound_id = paste0(subject_code, "_", localization_code),
+           wound_id = paste0(subject_code, "_", localization_code, "_",
+                             ulcer_label),
            time = as.numeric(str_extract(visit_code, "(?<=Day )\\d+"))
            ) |> 
     rename(ulcer_area = x2d_ulcer_area)
@@ -63,11 +64,7 @@ df_ulcer <- rbind(
                   sheet = "2 D Ulcer Area 745", range = "A1:J267"),
   load_ulcer_data("data/ulcer_area_and_histopath.xlsx", 
                   sheet = "2D Ulcer Area 384", range = "A1:J232")
-) |> 
-  group_by(time, wound_id) |> 
-  summarise(ulcer_area = sum(ulcer_area), 
-            animal_id = mean(subject_code), 
-            .groups="drop")
+) 
 
 # Histopath data
 df_histopath <- read_xlsx("data/ulcer_area_and_histopath.xlsx", 
@@ -107,15 +104,15 @@ ggsave("images/ulcer_vs_time_line_graph.png", plot = ulcer_plot_line)
 ``` r
 # Overlayed lines
 overlay_ulcer_plot_line <- df_ulcer |> 
-  mutate(animal_id = as.factor(animal_id)) |> 
+  mutate(animal_id = as.factor(subject_code)) |> 
   group_by(animal_id, time) |> 
   summarise(avg_area = mean(ulcer_area), sd_area = sd(ulcer_area),
             .groups="drop") |> 
   ggplot(aes(x = time, y = avg_area, color = animal_id)) + 
+    geom_line(data = df_summary, aes(y = avg_area, color = "Mean"), size = 0.8) +
   geom_line(alpha = 0.8, linetype = "dashed") +
-  geom_line(data = df_summary, aes(y = avg_area, color = NULL), size = 0.8) +
   theme_bw() + 
-  scale_color_manual(values = manual_cb[2:5]) +
+  scale_color_manual(values = manual_cb[1:5], breaks = c("Mean", "384", "745", "903", "987")) +
   labs(x = "Time (days)", 
        y = parse(text = "Average~Ulcer~Area~(mm^2)"), 
        color = "Animal ID") +
@@ -140,7 +137,7 @@ df_ulcer |>
   ggplot(aes(x = time, y = ulcer_area, group = wound_id, color = wound_id)) + 
   geom_point() + 
   geom_line() +
-  scale_color_manual(values = rep(manual_cb, 4)) +
+  #scale_color_manual(values = rep(manual_cb, 4)) +
   theme_bw() +
   theme(legend.position = "none") +
   labs(x = "Time (days)", y = "Ulcer Area (units??)")
