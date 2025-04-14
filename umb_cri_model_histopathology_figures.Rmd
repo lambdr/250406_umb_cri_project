@@ -43,16 +43,32 @@ load_ulcer_data <- function(path, sheet, range){
     mutate(localization_code = str_extract(localization_code, "(?<=Irradiation Site )[[:upper:]]"),
            wound_id = paste0(subject_code, "_", localization_code),
            time = as.numeric(str_extract(visit_code, "(?<=Day )\\d+"))
-           ) 
+           ) |> 
+    rename(ulcer_area = x2d_ulcer_area)
   
   
   return(df)
 }
-tmp <- load_ulcer_data("data/ulcer_area_and_histopath.xlsx", sheet = "2D Ulcer Area 987", range = "A1:I219")
+df_ulcer <- rbind(
+  load_ulcer_data("data/ulcer_area_and_histopath.xlsx", 
+                  sheet = "2D Ulcer Area 987", range = "A1:I219"),
+  load_ulcer_data("data/ulcer_area_and_histopath.xlsx", 
+                  sheet = "2D Ulcer Area 903", range = "A1:I234"),
+  load_ulcer_data("data/ulcer_area_and_histopath.xlsx", 
+                  sheet = "2 D Ulcer Area 745", range = "A1:I267"),
+  load_ulcer_data("data/ulcer_area_and_histopath.xlsx", 
+                  sheet = "2D Ulcer Area 384", range = "A1:I232")
+)
 
 tmp |> 
-  ggplot(aes(x = time, y = x2d_ulcer_area)) + 
-  geom_point()
+  #group_by(time) |> 
+  #summarise(time = time, mean_area )
+  ggplot(aes(x = time, y = x2d_ulcer_area, group = wound_id, color = wound_id)) + 
+  geom_point() + 
+  geom_line() +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(x = "Time (days)", y = "Ulcer Area (units??)")
 ```
 
 
@@ -71,6 +87,18 @@ make_bar_graph("surface_wound_depth_mm", "Surface wound depth (mm)")
 ```
 
 
+### Wound area over time
+```{r wound area over times}
+df_ulcer |> 
+  group_by(time) |> 
+  summarise(avg_area = mean())
+  ggplot(aes())
+```
+
+
+
+
+### Histopathology histograms
 
 ```{r}
 library(patchwork)
