@@ -1,0 +1,118 @@
+---
+title: "Necrosis Project Figures - Histopathology"
+author: "Derek Lamb"
+date: "`r Sys.Date()`"
+output: github_document
+---
+
+### Load Packages
+This code chunk loads the relevant packages for creating figures 
+```{r, include=FALSE}
+library(tidyverse)
+library(readxl)
+library(survival)
+library(ggsurvfit)
+library(survminer)
+```
+
+Eventually, I will have my colorblind palette as a package, but for now, here it is manually:
+
+```{r colorblind}
+manual_cb <- c("#000000", "#4E3F92", "#D5005E", "#28A2D2", "#999999", "#009B77", "#CC49A7",   "#00739E", "#862AAF", "#666666")
+```
+
+### Load data
+```{r load data}
+# 2D Ulcer area
+df_ulcer <- read_xlsx("data/ulcer_area_and_histopath.xlsx")
+
+# Histopath data
+df_histopath <- read_xlsx("data/ulcer_area_and_histopath.xlsx", 
+                          sheet = "Histopath meas.", range = "A1:L36") |> 
+  janitor::clean_names() |> 
+  drop_na(animal_number) |> 
+  mutate(wound_id = paste0(animal_number, site)) 
+```
+
+### Define Functions
+```{r}
+load_ulcer_data <- function(path, sheet, range){
+  df <- read_xlsx(path = path, sheet = sheet, range = range) |> 
+    janitor::clean_names() |> 
+    select(-c(1:3)) |> 
+    mutate(localization_code = str_extract(localization_code, "(?<=Irradiation Site )[[:upper:]]"),
+           wound_id = paste0(subject_code, "_", localization_code),
+           time = as.numeric(str_extract(visit_code, "(?<=Day )\\d+"))
+           ) 
+  
+  
+  return(df)
+}
+tmp <- load_ulcer_data("data/ulcer_area_and_histopath.xlsx", sheet = "2D Ulcer Area 987", range = "A1:I219")
+
+tmp |> 
+  ggplot(aes(x = time, y = x2d_ulcer_area)) + 
+  geom_point()
+```
+
+
+
+
+```{r}
+make_bar_graph <- function(var, y_lab = NULL){
+  df_histopath |> 
+    ggplot(aes(x = 0, y = !!sym(var))) + 
+    geom_bar(stat = "identity", width = 0.1) +
+    theme_bw() +
+    scale_x_continuous(labels = NULL) +
+    labs(y = y_lab, x = NULL)
+}
+make_bar_graph("surface_wound_depth_mm", "Surface wound depth (mm)")
+```
+
+
+
+```{r}
+library(patchwork)
+set.seed(1)
+a <- df_histopath |> 
+  ggplot(aes(x = "tmp", y = surface_wound_depth_mm)) +
+  geom_boxplot() +
+  scale_x_discrete(labels = NULL) +
+  theme_bw() +
+  labs(x = NULL, y = "Surface Wound Depth (mm)")
+
+b <- df_histopath |> 
+  ggplot(aes(x = "tmp", y = surface_wound_depth_mm)) +
+  geom_boxplot() +
+  geom_jitter(position = position_jitter(0.2), alpha = 0.6) +
+  scale_x_discrete(labels = NULL) +
+  theme_bw() +
+  labs(x = NULL, y = "Surface Wound Depth (mm)")
+
+
+c <- df_histopath |> 
+  mutate(mean = mean(surface_wound_depth_mm),
+         sd = sd(surface_wound_depth_mm)) |> 
+  select(mean, sd) |> 
+  head(1) |> 
+  ggplot(aes(x="tmp", y = mean)) +
+  geom_bar(stat = "identity", width = 0.2, color = "black", alpha = 0.6) +
+  geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd, width = 0.1)) +
+  scale_x_discrete(labels = NULL) +
+  theme_bw() +
+  labs(x = NULL, y = "Surface Wound Depth (mm)")
+
+d <- df_histopath |> 
+  ggplot(aes(x = surface_wound_depth_mm)) + 
+  geom_histogram(binwidth = 0.1, color = "black", alpha = 0.6) +
+  theme_bw() + 
+  labs(x = "Surface Wound Depth (mm)", y = "Frequency")
+
+(a + b) / (c + d)
+
+```
+
+
+
+

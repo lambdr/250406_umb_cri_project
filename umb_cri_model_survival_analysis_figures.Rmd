@@ -1,5 +1,5 @@
 ---
-title: "Necrosis Project Figures"
+title: "Necrosis Project Figures - Survival Analysis"
 author: "Derek Lamb"
 date: "`r Sys.Date()`"
 output: github_document
