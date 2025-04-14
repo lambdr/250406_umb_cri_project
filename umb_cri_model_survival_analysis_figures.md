@@ -123,7 +123,7 @@ ulceration_km_with_ci <- df_injury |>
   filter(wound_type == "Ulceration") |> 
   mutate(days_to_closure = wound_end - wound_start) |> 
   survfit(Surv(days_to_closure, wound_resolved) ~ 1, data = _, conf.type = "log-log") |> 
-  ggsurvfit(type = "risk") +
+  ggsurvfit() +
   add_confidence_interval(type = "lines", alpha = 0.6, size = 0.4, linetype = "dashed") +
   add_confidence_interval(alpha = 0.1) + 
   add_censor_mark(size = 1) +
