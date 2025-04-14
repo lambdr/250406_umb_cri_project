@@ -123,7 +123,7 @@ ulceration_km_with_ci <- df_injury |>
   filter(wound_type == "Ulceration") |> 
   mutate(days_to_closure = wound_end - wound_start) |> 
   survfit(Surv(days_to_closure, wound_resolved) ~ 1, data = _, conf.type = "log-log") |> 
-  ggsurvfit() +
+  ggsurvfit(type = "risk") +
   add_confidence_interval(type = "lines", alpha = 0.6, size = 0.4, linetype = "dashed") +
   add_confidence_interval(alpha = 0.1) + 
   add_censor_mark(size = 1) +
@@ -185,8 +185,34 @@ print(four_pheno_km) # save as 601x1000px png
 ![](umb_cri_model_survival_analysis_figures_files/figure-gfm/all%20four%20phenotypes-1.png)<!-- -->
 
 ``` r
-#ggsave(plot = print(four_pheno_km), filename = "images/combined_kaplan_meier_four_phenos.pdf")
+ggsave(plot = print(four_pheno_km), filename = "images/combined_kaplan_meier_four_phenos.pdf")
 ```
+
+    ## Saving 7 x 5 in image
+
+![](umb_cri_model_survival_analysis_figures_files/figure-gfm/all%20four%20phenotypes-2.png)<!-- -->
+
+``` r
+four_pheno_km_flipped <- four_pheno_km_fit |> 
+  ggsurvplot(fun = "event", color = "strata", palette = manual_cb,
+             xlab = "Time from first occurence (days)",
+             ylab = "Survival Function for Wound Closure",
+             legend.title = "Injury Phenotype",
+             break.x.by = 20, risk.table.y.text = F,
+             risk.table.title = "Number of irradiation sites at risk of event",
+             risk.table = TRUE, risk.table.col = "strata", 
+             fontsize = 4,
+             ggtheme=theme_bw(), tables.theme = theme_classic(), 
+             legend = "right") 
+
+
+ggsave(plot = print(four_pheno_km_flipped), 
+       filename = "images/combined_kaplan_meier_four_phenos_flipped.pdf")
+```
+
+    ## Saving 7 x 5 in image
+
+![](umb_cri_model_survival_analysis_figures_files/figure-gfm/all%20four%20phenotypes-3.png)<!-- -->
 
 Additionally, the following plot is the same, but without the erythema
 phenotype.
