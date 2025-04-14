@@ -93,7 +93,8 @@ ulcer_plot_line <- df_summary |>
   geom_ribbon(aes(ymin = pmax(avg_area - sd_area, 0), ymax = avg_area + sd_area),
               alpha = 0.4, color = "#000000AA", linetype = "dashed")+
   theme_bw() + 
-  labs(x = "Time (days)", y = parse(text = "Average~Ulcer~Area~(mm^2)")) +
+  labs(x = "Time after irradiation (days)", 
+       y = parse(text = "Average~Ulcer~Area~(mm^2)")) +
   scale_x_continuous(breaks = 0:6*20)
 
 ggsave("images/ulcer_vs_time_line_graph.png", plot = ulcer_plot_line)
@@ -113,7 +114,7 @@ overlay_ulcer_plot_line <- df_ulcer |>
   geom_line(alpha = 0.8, linetype = "dashed") +
   theme_bw() + 
   scale_color_manual(values = manual_cb[1:5], breaks = c("Mean", "384", "745", "903", "987")) +
-  labs(x = "Time (days)", 
+  labs(x = "Time after irradiation (days)", 
        y = parse(text = "Average~Ulcer~Area~(mm^2)"), 
        color = "Animal ID") +
   scale_x_continuous(breaks = 0:6*20)
