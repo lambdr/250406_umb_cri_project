@@ -1,29 +1,25 @@
----
-title: "Necrosis Project Figures - Histopathology"
-author: "Derek Lamb"
-date: "`r Sys.Date()`"
-output: github_document
----
+Necrosis Project Figures - Histopathology
+================
+Derek Lamb
+2025-04-14
 
 ### Load Packages
-This code chunk loads the relevant packages for creating figures 
-```{r load packages, include=FALSE}
-library(tidyverse)
-library(readxl)
-library(survival)
-library(ggsurvfit)
-library(survminer)
-```
 
-Eventually, I will have my colorblind palette as a package, but for now, here it is manually:
+This code chunk loads the relevant packages for creating figures
 
-```{r colorblind}
+Eventually, I will have my colorblind palette as a package, but for now,
+here it is manually:
+
+``` r
 manual_cb <- c("#000000", "#4E3F92", "#D5005E", "#28A2D2", "#999999", "#009B77", "#CC49A7", "#00739E", "#862AAF", "#666666")
 ```
 
 ### Define Functions
-The following code chunk defines functions for loading ulceration data and creating histograms.
-```{r define functions}
+
+The following code chunk defines functions for loading ulceration data
+and creating histograms.
+
+``` r
 load_ulcer_data <- function(path, sheet, range){
   df <- read_xlsx(path = path, sheet = sheet, range = range) |> 
     janitor::clean_names() |> 
@@ -53,8 +49,10 @@ make_histo_hist <- function(var, bin_width = 0.1, x_lab = NULL){
 ```
 
 ### Load data
+
 Here we load in the data, combining the ulceration data across sheets.
-```{r load data}
+
+``` r
 # 2D Ulcer area
 df_ulcer <- rbind(
   load_ulcer_data("data/ulcer_area_and_histopath.xlsx", 
@@ -79,10 +77,12 @@ df_histopath <- read_xlsx("data/ulcer_area_and_histopath.xlsx",
   mutate(wound_id = paste0(animal_number, site)) 
 ```
 
-
 ### Wound area over time
-I will present the ulcer area over time in two ways, first summarised into a line graph, and additionally as a spaghetti plot.
-```{r wound area over times}
+
+I will present the ulcer area over time in two ways, first summarised
+into a line graph, and additionally as a spaghetti plot.
+
+``` r
 # Summarise into df
 df_summary <- df_ulcer |> 
   group_by(time) |> 
@@ -100,7 +100,11 @@ ulcer_plot_line <- df_summary |>
   scale_x_continuous(breaks = 0:6*20)
 
 ggsave("images/ulcer_vs_time_line_graph.png", plot = ulcer_plot_line)
+```
 
+    ## Saving 7 x 5 in image
+
+``` r
 # Overlayed lines
 overlay_ulcer_plot_line <- df_ulcer |> 
   mutate(animal_id = as.factor(animal_id)) |> 
@@ -116,9 +120,21 @@ overlay_ulcer_plot_line <- df_ulcer |>
        y = parse(text = "Average~Ulcer~Area~(mm^2)"), 
        color = "Animal ID") +
   scale_x_continuous(breaks = 0:6*20)
+```
 
+    ## Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+    ## ℹ Please use `linewidth` instead.
+    ## This warning is displayed once every 8 hours.
+    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+    ## generated.
+
+``` r
 ggsave("images/overlayed_ulcer_vs_time_line_graph.png", plot = overlay_ulcer_plot_line)
+```
 
+    ## Saving 7 x 5 in image
+
+``` r
 # Spaghetti Plot (WIP)
 df_ulcer |> 
   ggplot(aes(x = time, y = ulcer_area, group = wound_id, color = wound_id)) + 
@@ -130,8 +146,9 @@ df_ulcer |>
   labs(x = "Time (days)", y = "Ulcer Area (units??)")
 ```
 
+![](umb_cri_model_histopathology_figures_files/figure-gfm/wound%20area%20over%20times-1.png)<!-- -->
 
-```{r attempt ridge plot}
+``` r
 library(ggridges)
 
 df_ulcer |> 
@@ -142,26 +159,47 @@ df_ulcer |>
   labs(x = "Time (days)", y = "Ulcer Area")
 ```
 
+    ## `stat_binline()` using `bins = 30`. Pick better value with `binwidth`.
 
-
+![](umb_cri_model_histopathology_figures_files/figure-gfm/attempt%20ridge%20plot-1.png)<!-- -->
 
 ### Histopathology histograms
-In the following code chunk, I apply the previously defined `make_histo_hist()` function to generate and save histograms of the relevant histopathology variables.
 
-```{r make histograms}
+In the following code chunk, I apply the previously defined
+`make_histo_hist()` function to generate and save histograms of the
+relevant histopathology variables.
+
+``` r
 make_histo_hist("fibrosis_granulation_tissue_area_mm2", 50,
                 parse(text = "Fibrosis/Granulation~Tissue~Area~(mm^2)"))
+```
 
+    ## Saving 7 x 5 in image
+
+``` r
 make_histo_hist("deep_fibrosis_wound_depth_mm", 2,
                 "Deep Fibrosis Wound Depth (mm)")
+```
 
+    ## Saving 7 x 5 in image
+
+``` r
 make_histo_hist("deep_fibrosis_wound_length_mm", 4,
                 "Deep Fibrosis Wound Length (mm)")
+```
 
+    ## Saving 7 x 5 in image
+
+``` r
 make_histo_hist("epidermal_wound_length_mm", 4,
                 "Epidermal Wound Length (mm)")
+```
 
+    ## Saving 7 x 5 in image
+
+``` r
 make_histo_hist("percent_re_epithelialization_percent", 5,
                 "Re-epithelialization (%)")
 ```
 
+    ## Saving 7 x 5 in image
